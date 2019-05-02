@@ -32,8 +32,10 @@ cwd = os.getcwd()
 # test_txt_path = os.path.join(cwd, 'data/CamVid/test.txt')
 train_data_path = os.path.join(cwd, 'data/CamVid/train/')
 test_data_path = os.path.join(cwd, 'data/CamVid/test/')
+val_data_path = os.path.join(cwd, 'data/CamVid/val/')
 train_label_path = os.path.join(cwd, 'data/CamVid/trainannot/')
 test_label_path = os.path.join(cwd, 'data/CamVid/testannot/')
+val_label_path = os.path.join(cwd, 'data/CamVid/valannot/')
 
 
 class MyDataset(Dataset):
@@ -61,23 +63,29 @@ class MyDataset(Dataset):
         label = Image.open(os.path.join(self.label_path, image_name))
         if self.transform:
             image = self.transform(image)
+            label = self.transform(label)
         return image, label
 
 
 # create my dataset
-train_data_set = MyDataset(train_data_path, train_label_path, transforms.Compose([
+trans = transforms.Compose([
     transforms.Resize((480, 360)),
-    transforms.ToTensor(),
-    transforms.Normalize((5.0, 5.0, 5.0), (5.0, 5.0, 5.0))
-]))
+    transforms.ToTensor()
+])
+train_data_set = MyDataset(train_data_path, train_label_path, trans)
+test_data_set = MyDataset(test_data_path, test_label_path, trans)
+val_data_set = MyDataset(val_data_path, val_label_path, trans)
 
 # create my dataloader
 train_loader = torch.utils.data.DataLoader(train_data_set, batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_data_set, batch_size=64, shuffle=True)
+val_loader = torch.utils.data.DataLoader(val_data_set, batch_size=64, shuffle=True)
 
+print("Complete the preparation of dataset")
 
-print(train_data_set[12][0].size())
-'''
-test = train_data_set[12][0].numpy()
-plt.imshow(test)
+"""
+print(train_data_set[12][0].numpy())
+test = train_data_set[12][1].numpy()
+plt.imshow(test[0])
 plt.show()
-'''
+"""
