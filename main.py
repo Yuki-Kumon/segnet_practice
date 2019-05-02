@@ -23,21 +23,17 @@ import pandas as pd
 # import cv2
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # set file path
 cwd = os.getcwd()
-train_txt_path = os.path.join(cwd, 'data/CamVid/test.txt')
-test_txt_path = os.path.join(cwd, 'data/CamVid/test.txt')
-train_data_path = os.path.join(cwd, 'data/CamVid/train')
-test_data_path = os.path.join(cwd, 'data/CamVid/test')
-train_label_path = os.path.join(cwd, 'data/CamVid/trainannot')
-test_label_path = os.path.join(cwd, 'data/CamVid/testannot')
-
-f = open(train_txt_path, 'r')
-for line in f:
-    print(os.path.basename(line.split(' ')[0]))
-f.close()
+# train_txt_path = os.path.join(cwd, 'data/CamVid/test.txt')
+# test_txt_path = os.path.join(cwd, 'data/CamVid/test.txt')
+train_data_path = os.path.join(cwd, 'data/CamVid/train/')
+test_data_path = os.path.join(cwd, 'data/CamVid/test/')
+train_label_path = os.path.join(cwd, 'data/CamVid/trainannot/')
+test_label_path = os.path.join(cwd, 'data/CamVid/testannot/')
 
 
 class MyDataset(Dataset):
@@ -45,16 +41,12 @@ class MyDataset(Dataset):
     dataset class
     '''
 
-    def __init__(self, txt_path, data_path, label_path, transform=None):
+    def __init__(self, image_path, label_path, transform=None):
         # set path
-        self.data_path = data_path
+        self.image_path = image_path
         self.label_path = label_path
         # create file name list
-        file_list = []
-        f = open(txt_path, 'r')
-        for line in f:
-            file_list.append([os.path.basename(line.split(' ')[0]), os.path.basename(line.split(' ')[1])])
-        f.close()
+        file_list = os.listdir(path=image_path)
         self.file_list = file_list
         # set transforms
         self.transform = transform
@@ -64,6 +56,28 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         # load image and label
-        data_name = self.file_list[0, idx]
-        label_name = self.file_list[1, idx]
+        image_name = self.file_list[idx]
+        image = Image.open(os.path.join(self.image_path, image_name))
+        label = Image.open(os.path.join(self.label_path, image_name))
+        if self.transform:
+            image = self.transform(image)
         return image, label
+
+
+# create my dataset
+train_data_set = MyDataset(train_data_path, train_label_path, transforms.Compose([
+    transforms.Resize((480, 360)),
+    transforms.ToTensor(),
+    transforms.Normalize((5.0, 5.0, 5.0), (5.0, 5.0, 5.0))
+]))
+
+# create my dataloader
+train_loader = torch.utils.data.DataLoader(train_data_set, batch_size=64, shuffle=True)
+
+
+print(train_data_set[12][0].size())
+'''
+test = train_data_set[12][0].numpy()
+plt.imshow(test)
+plt.show()
+'''
