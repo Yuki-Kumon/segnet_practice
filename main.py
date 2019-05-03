@@ -26,6 +26,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# for running in Google Colab
+if(0):
+    from google.colab import drive
+    drive.mount('/content/drive')
+    # 必要ならば以下のようにディレクトリ移動する
+    %cd /content/drive/'My Drive'/'Colab'/
+
+
 # set file path
 cwd = os.getcwd()
 train_data_path = os.path.join(cwd, 'data/CamVid/train/')
@@ -139,6 +147,7 @@ class SegNet(nn.Module):
         self.dropout = nn.Dropout2d(p=dropout_ratio)
 
     def forward(self, x):
+        x = x.to('cuda')
         # define the forward network
         # Encoder
         x1_1 = F.relu(self.bachnorm1_1(self.conv1_1(x)))
@@ -187,6 +196,7 @@ class SegNet(nn.Module):
         x1d = F.max_unpool2d(self.dropout(x2_1_d), id1, kernel_size=2, stride=2)
         x1_2_d = F.relu(self.bachnorm1_2_d(self.conv1_2_d(x1d)))
         x1_1_d = self.conv1_1_d(x1_2_d)
+        x1_1_d = x1_1_d.to('cpu')
 
         return x1_1_d
 
@@ -211,6 +221,7 @@ print("Complete the preparation of dataset")
 # input cahnnel number is 3
 # label number is 12
 model = SegNet(3, 12, 0.01)
+model = model.to('cuda')
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 criterion = nn.CrossEntropyLoss()
 
@@ -268,9 +279,12 @@ def test():
 
 # main functional
 if __name__ == '__main__':
-    for epoch in range(1 + 1):
+    for epoch in range(1, 1 + 1):
         train(epoch)
         test()
+    # save
+    PATH = os.path.join(cwd, 'model')
+    torch.save(model.state_dict(), PATH)
 
 
 """
