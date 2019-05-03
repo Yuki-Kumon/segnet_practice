@@ -5,7 +5,7 @@ SegNet practice using street landscape pictures
 Author :
     Yuki Kumon
 Last Update :
-    2019-05-02
+    2019-05-04
 """
 
 
@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 
 # for running in Google Colab
-if(0):
+if(1):
     from google.colab import drive
     drive.mount('/content/drive')
     # 必要ならば以下のようにディレクトリ移動する
