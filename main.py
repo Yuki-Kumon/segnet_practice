@@ -223,23 +223,54 @@ if(0):
     print("Loaded the pretrained model")
 
 
-# define train function
+# define train and test function
 def train(epoch):
     '''
     train function
     '''
     model.train()
     for batch_idx, (image, label) in enumerate(train_loader):
-        # Variable型への変換(統合されたので省略)
-        # image, label = Variable(image), Variable(label)
+        # forwadr
         optimizer.zero_grad()
         output = model(image)
         loss = criterion(output, label)
         loss.backward()
         optimizer.step()
+        # backward
+        loss.backward()
+        optimizer.step()
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
             epoch, batch_idx * len(image), len(train_loader.dataset),
             100. * batch_idx / len(train_loader), loss.item()))
+
+
+def test():
+    '''
+    testing function
+    '''
+    # initialize
+    test_loss = 0.0
+    correct = 0.0
+    model.eval()
+    for (image, label) in test_loader:
+        # Variable型への変換(統合されたので省略)
+        # image, label = Variable(image.float(), volatile=True), Variable(label)
+        output = model(image)
+        test_loss += criterion(output, label).item()  # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
+        correct += pred.eq(label.data.view_as(pred)).long().cpu().sum()
+
+    test_loss /= len(test_loader.dataset)
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, int(len(test_loader.dataset)),
+        100. * correct / len(test_loader.dataset)))
+
+
+# main functional
+if __name__ == '__main__':
+    for epoch in range(1 + 1):
+        train(epoch)
+        test()
 
 
 """
