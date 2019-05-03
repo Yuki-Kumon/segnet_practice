@@ -49,7 +49,7 @@ class MyDataset(Dataset):
     dataset class
     '''
 
-    def __init__(self, image_path, label_path, transform=None):
+    def __init__(self, image_path, label_path, transform1=None, transform2=None):
         # set path
         self.image_path = image_path
         self.label_path = label_path
@@ -57,7 +57,8 @@ class MyDataset(Dataset):
         file_list = os.listdir(path=image_path)
         self.file_list = file_list
         # set transforms
-        self.transform = transform
+        self.transform1 = transform1
+        self.transform2 = transform2
 
     def __len__(self):
         return len(self.file_list)
@@ -67,10 +68,19 @@ class MyDataset(Dataset):
         image_name = self.file_list[idx]
         image = Image.open(os.path.join(self.image_path, image_name))
         label = Image.open(os.path.join(self.label_path, image_name))
-        if self.transform:
-            image = self.transform(image)
-            label = self.transform(label)
-        return image, label
+        if self.transform1:
+            image = self.transform1(image)
+        if self.transform2:
+            label = self.transform2(label)
+        return image, label[0]
+
+
+class Tolongtensor():
+    '''
+    transform tensor to longtensor
+    '''
+    def __call__(self, label):
+        return label.long()
 
 
 class SegNet(nn.Module):
@@ -202,18 +212,23 @@ class SegNet(nn.Module):
 
 
 # create my dataset
-trans = transforms.Compose([
-    transforms.Resize((480, 360)),
+trans1 = transforms.Compose([
+    transforms.Resize((480, 320)),
     transforms.ToTensor()
 ])
-train_data_set = MyDataset(train_data_path, train_label_path, trans)
-test_data_set = MyDataset(test_data_path, test_label_path, trans)
-val_data_set = MyDataset(val_data_path, val_label_path, trans)
+trans2 = transforms.Compose([
+    transforms.Resize((480, 320)),
+    transforms.ToTensor(),
+    Tolongtensor()
+])
+train_data_set = MyDataset(train_data_path, train_label_path, trans1, trans2)
+test_data_set = MyDataset(test_data_path, test_label_path, trans1, trans2)
+val_data_set = MyDataset(val_data_path, val_label_path, trans1, trans2)
 
 # create my dataloader
-train_loader = torch.utils.data.DataLoader(train_data_set, batch_size=64, shuffle=True)
-test_loader = torch.utils.data.DataLoader(test_data_set, batch_size=64, shuffle=True)
-val_loader = torch.utils.data.DataLoader(val_data_set, batch_size=64, shuffle=True)
+train_loader = torch.utils.data.DataLoader(train_data_set, batch_size=4, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_data_set, batch_size=4, shuffle=True)
+val_loader = torch.utils.data.DataLoader(val_data_set, batch_size=4, shuffle=True)
 
 print("Complete the preparation of dataset")
 
@@ -223,14 +238,16 @@ print("Complete the preparation of dataset")
 model = SegNet(3, 12, 0.01)
 model = model.to('cuda')
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
-criterion = nn.CrossEntropyLoss()
+class_weighting = torch.tensor([0.2595, 0.1826, 4.5640, 0.1417, 0.5051, 0.3826, 9.6446, 1.8418, 6.6823, 6.2478, 3.0, 7.3614])
+criterion = nn.CrossEntropyLoss(weight=class_weighting)
 
 print("Complete the preparation of model")
 
 # if needed, load pretrained model
-if(0):
+if(1):
     PATH = os.path.join(cwd, 'model')
     model.load_state_dict(torch.load(PATH))
+    # PATH_txt = os.path.join(cwd, 'epoch_num.txt')
     print("Loaded the pretrained model")
 
 
@@ -245,8 +262,6 @@ def train(epoch):
         optimizer.zero_grad()
         output = model(image)
         loss = criterion(output, label)
-        loss.backward()
-        optimizer.step()
         # backward
         loss.backward()
         optimizer.step()
@@ -273,8 +288,8 @@ def test():
 
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, int(len(test_loader.dataset)),
-        100. * correct / len(test_loader.dataset)))
+        test_loss, correct, len(test_loader.dataset) * 480.0 * 320.0,
+        100. * correct / (len(test_loader.dataset) * 480.0 * 320.0)))
 
 
 # main functional
