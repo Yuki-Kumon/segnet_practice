@@ -207,6 +207,19 @@ val_loader = torch.utils.data.DataLoader(val_data_set, batch_size=64, shuffle=Tr
 
 print("Complete the preparation of dataset")
 
+# create SegNet Model
+# input cahnnel number is 3
+# label number is 12
+model = SegNet(3, 12, 0.01)
+
+print("Complete the preparation of model")
+
+# if needed, load pretrained model
+if(0):
+    PATH = os.path.join(cwd, 'model')
+    model.load_state_dict(torch.load(PATH))
+
+
 """
 print(train_data_set[12][0].numpy())
 test = train_data_set[12][1].numpy()
