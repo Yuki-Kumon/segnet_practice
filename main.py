@@ -211,6 +211,8 @@ print("Complete the preparation of dataset")
 # input cahnnel number is 3
 # label number is 12
 model = SegNet(3, 12, 0.01)
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+criterion = nn.CrossEntropyLoss()
 
 print("Complete the preparation of model")
 
@@ -218,6 +220,26 @@ print("Complete the preparation of model")
 if(0):
     PATH = os.path.join(cwd, 'model')
     model.load_state_dict(torch.load(PATH))
+    print("Loaded the pretrained model")
+
+
+# define train function
+def train(epoch):
+    '''
+    train function
+    '''
+    model.train()
+    for batch_idx, (image, label) in enumerate(train_loader):
+        # Variable型への変換(統合されたので省略)
+        # image, label = Variable(image), Variable(label)
+        optimizer.zero_grad()
+        output = model(image)
+        loss = criterion(output, label)
+        loss.backward()
+        optimizer.step()
+        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            epoch, batch_idx * len(image), len(train_loader.dataset),
+            100. * batch_idx / len(train_loader), loss.item()))
 
 
 """
