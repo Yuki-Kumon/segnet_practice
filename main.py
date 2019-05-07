@@ -75,12 +75,14 @@ class MyDataset(Dataset):
         return image, label[0]
 
 
-class Tolongtensor():
+class Labeltrans():
     '''
     transform tensor to longtensor
     '''
-    def __call__(self, label):
-        return label.long()
+    def __call__(self, label_input):
+        label = np.asarray(label_input)
+        label_tensor = torch.from_numpy(label).long().unsqueeze(0)
+        return label_tensor
 
 
 class SegNet(nn.Module):
@@ -232,8 +234,7 @@ trans1 = transforms.Compose([
 ])
 trans2 = transforms.Compose([
     transforms.Resize((480, 360)),
-    transforms.ToTensor(),
-    Tolongtensor()
+    Labeltrans()
 ])
 train_data_set = MyDataset(train_data_path, train_label_path, trans1, trans2)
 test_data_set = MyDataset(test_data_path, test_label_path, trans1, trans2)
