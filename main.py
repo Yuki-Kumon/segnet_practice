@@ -74,7 +74,7 @@ class MyDataset(Dataset):
             image = self.transform1(image)
         if self.transform2:
             label = self.transform2(label)
-        return image, label[0]
+        return image, label
 
 
 class Labeltrans():
@@ -83,7 +83,7 @@ class Labeltrans():
     '''
     def __call__(self, label_input):
         label = np.asarray(label_input)
-        label_tensor = torch.from_numpy(label).long().unsqueeze(0)
+        label_tensor = torch.from_numpy(label).long()
         return label_tensor
 
 
