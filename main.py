@@ -19,21 +19,19 @@ import torch.utils.data  # データセット読み込み関連
 # from torch.autograd import Variable
 import os
 # import sys
-# import pandas as pd
+import pandas as pd
 # import cv2
 from PIL import Image
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 # for running in Google Colab
-"""
 if(1):
     from google.colab import drive
     drive.mount('/content/drive')
     # 必要ならば以下のようにディレクトリ移動する
     %cd /content/drive/'My Drive'/'Colab'/
-"""
 
 
 # set file path
@@ -79,7 +77,7 @@ class MyDataset(Dataset):
 
 class Labeltrans():
     '''
-    transform annotetion
+    transform tensor to longtensor
     '''
     def __call__(self, label_input):
         label = np.asarray(label_input)
@@ -161,8 +159,8 @@ class SegNet(nn.Module):
         self.dropout = nn.Dropout2d(p=dropout_ratio)
 
         # xのみpadding
-        self.m = torch.nn.ZeroPad2d((3, 3, 0, 0))
-        self.m_ = torch.nn.ZeroPad2d((-3, -3, 0, 0))
+        self.m = torch.nn.ZeroPad2d((0, 0, 3, 3))
+        self.m_ = torch.nn.ZeroPad2d((0, 0, -3, -3))
 
     def forward(self, x):
         x = x.to('cuda')
@@ -231,11 +229,11 @@ class SegNet(nn.Module):
 
 # create my dataset
 trans1 = transforms.Compose([
-    transforms.Resize((480, 360)),
+    transforms.Resize((360, 480)),
     transforms.ToTensor()
 ])
 trans2 = transforms.Compose([
-    transforms.Resize((480, 360)),
+    transforms.Resize((360, 480)),
     Labeltrans()
 ])
 train_data_set = MyDataset(train_data_path, train_label_path, trans1, trans2)
@@ -306,8 +304,8 @@ def test():
 
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset) * 480.0 * 320.0,
-        100. * correct / (len(test_loader.dataset) * 480.0 * 320.0)))
+        test_loss, correct, len(test_loader.dataset) * 480.0 * 360.0,
+        100. * correct / (len(test_loader.dataset) * 480.0 * 360.0)))
 
 
 # main functional
@@ -315,6 +313,8 @@ if __name__ == '__main__':
     for epoch in range(1, 5 + 1):
         train(epoch)
         # test()
+        if(epoch % 5 == 0):
+            test()
     # save
     PATH = os.path.join(cwd, 'model')
     torch.save(model.state_dict(), PATH)

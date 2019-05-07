@@ -159,8 +159,8 @@ class SegNet(nn.Module):
         self.dropout = nn.Dropout2d(p=dropout_ratio)
 
         # xのみpadding
-        self.m = torch.nn.ZeroPad2d((3, 3, 0, 0))
-        self.m_ = torch.nn.ZeroPad2d((-3, -3, 0, 0))
+        self.m = torch.nn.ZeroPad2d((0, 0, 3, 3))
+        self.m_ = torch.nn.ZeroPad2d((0, 0, -3, -3))
 
     def forward(self, x):
         x = x.to('cuda')
@@ -229,11 +229,11 @@ class SegNet(nn.Module):
 
 # create my dataset
 trans1 = transforms.Compose([
-    transforms.Resize((480, 360)),
+    transforms.Resize((360, 480)),
     transforms.ToTensor()
 ])
 trans2 = transforms.Compose([
-    transforms.Resize((480, 360)),
+    transforms.Resize((360, 480)),
     Labeltrans()
 ])
 train_data_set = MyDataset(train_data_path, train_label_path, trans1, trans2)
