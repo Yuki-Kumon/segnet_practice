@@ -5,7 +5,7 @@ SegNet practice using street landscape pictures
 Author :
     Yuki Kumon
 Last Update :
-    2019-05-04
+    2019-05-07
 """
 
 
@@ -156,31 +156,45 @@ class SegNet(nn.Module):
 
         self.dropout = nn.Dropout2d(p=dropout_ratio)
 
+        # xのみpadding
+        self.m = torch.nn.ZeroPad2d((3, 3, 0, 0))
+        self.m_ = torch.nn.ZeroPad2d((-3, -3, 0, 0))
+
     def forward(self, x):
         x = x.to('cuda')
         # define the forward network
         # Encoder
         x1_1 = F.relu(self.bachnorm1_1(self.conv1_1(x)))
         x1_2 = F.relu(self.bachnorm1_2(self.conv1_2(x1_1)))
+        # 360→180
+        # 480→240
         x1p, id1 = F.max_pool2d(self.dropout(x1_2), kernel_size=2, stride=2, return_indices=True)
 
         x2_1 = F.relu(self.bachnorm2_1(self.conv2_1(x1p)))
         x2_2 = F.relu(self.bachnorm2_2(self.conv2_2(x2_1)))
+        # 180→90
+        # 240→120
         x2p, id2 = F.max_pool2d(self.dropout(x2_2), kernel_size=2, stride=2, return_indices=True)
 
         x3_1 = F.relu(self.bachnorm3_1(self.conv3_1(x2p)))
         x3_2 = F.relu(self.bachnorm3_2(self.conv3_2(x3_1)))
-        x3_3 = F.relu(self.bachnorm3_3(self.conv3_3(x3_2)))
+        x3_3 = F.relu(self.bachnorm3_3(self.m(self.conv3_3(x3_2))))
+        # 96→48, xのみpadding
+        # 120→60
         x3p, id3 = F.max_pool2d(self.dropout(x3_3), kernel_size=2, stride=2, return_indices=True)
 
         x4_1 = F.relu(self.bachnorm4_1(self.conv4_1(x3p)))
         x4_2 = F.relu(self.bachnorm4_2(self.conv4_2(x4_1)))
         x4_3 = F.relu(self.bachnorm4_3(self.conv4_3(x4_2)))
+        # 48→24
+        # 60→30
         x4p, id4 = F.max_pool2d(self.dropout(x4_3), kernel_size=2, stride=2, return_indices=True)
 
         x5_1 = F.relu(self.bachnorm5_1(self.conv5_1(x4p)))
         x5_2 = F.relu(self.bachnorm5_2(self.conv5_2(x5_1)))
         x5_3 = F.relu(self.bachnorm5_3(self.conv5_3(x5_2)))
+        # 24→12
+        # 30→15
         x5p, id5 = F.max_pool2d(self.dropout(x5_3), kernel_size=2, stride=2, return_indices=True)
 
         # Decoder
@@ -197,7 +211,7 @@ class SegNet(nn.Module):
         x3d = F.max_unpool2d(self.dropout(x4_1_d), id3, kernel_size=2, stride=2)
         x3_3_d = F.relu(self.bachnorm3_3_d(self.conv3_3_d(x3d)))
         x3_2_d = F.relu(self.bachnorm3_2_d(self.conv3_2_d(x3_3_d)))
-        x3_1_d = F.relu(self.bachnorm3_1_d(self.conv3_1_d(x3_2_d)))
+        x3_1_d = F.relu(self.bachnorm3_1_d(self.m_(self.conv3_1_d(x3_2_d))))
 
         x2d = F.max_unpool2d(self.dropout(x3_1_d), id2, kernel_size=2, stride=2)
         x2_2_d = F.relu(self.bachnorm2_2_d(self.conv2_2_d(x2d)))
@@ -213,11 +227,11 @@ class SegNet(nn.Module):
 
 # create my dataset
 trans1 = transforms.Compose([
-    transforms.Resize((480, 320)),
+    transforms.Resize((480, 360)),
     transforms.ToTensor()
 ])
 trans2 = transforms.Compose([
-    transforms.Resize((480, 320)),
+    transforms.Resize((480, 360)),
     transforms.ToTensor(),
     Tolongtensor()
 ])
@@ -244,7 +258,7 @@ criterion = nn.CrossEntropyLoss(weight=class_weighting)
 print("Complete the preparation of model")
 
 # if needed, load pretrained model
-if(1):
+if(0):
     PATH = os.path.join(cwd, 'model')
     model.load_state_dict(torch.load(PATH))
     # PATH_txt = os.path.join(cwd, 'epoch_num.txt')
@@ -262,6 +276,7 @@ def train(epoch):
         optimizer.zero_grad()
         output = model(image)
         loss = criterion(output, label)
+        # print(output)
         # backward
         loss.backward()
         optimizer.step()
