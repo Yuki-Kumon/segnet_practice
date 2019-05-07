@@ -259,7 +259,7 @@ criterion = nn.CrossEntropyLoss(weight=class_weighting)
 print("Complete the preparation of model")
 
 # if needed, load pretrained model
-if(0):
+if(1):
     PATH = os.path.join(cwd, 'model')
     model.load_state_dict(torch.load(PATH))
     # PATH_txt = os.path.join(cwd, 'epoch_num.txt')
@@ -310,9 +310,9 @@ def test():
 
 # main functional
 if __name__ == '__main__':
-    for epoch in range(1, 1 + 1):
+    for epoch in range(1, 5 + 1):
         train(epoch)
-        test()
+        # test()
     # save
     PATH = os.path.join(cwd, 'model')
     torch.save(model.state_dict(), PATH)
