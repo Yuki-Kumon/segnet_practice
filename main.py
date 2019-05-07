@@ -19,19 +19,21 @@ import torch.utils.data  # データセット読み込み関連
 # from torch.autograd import Variable
 import os
 # import sys
-import pandas as pd
+# import pandas as pd
 # import cv2
 from PIL import Image
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 # for running in Google Colab
+"""
 if(1):
     from google.colab import drive
     drive.mount('/content/drive')
     # 必要ならば以下のようにディレクトリ移動する
     %cd /content/drive/'My Drive'/'Colab'/
+"""
 
 
 # set file path
