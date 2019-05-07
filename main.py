@@ -79,7 +79,7 @@ class MyDataset(Dataset):
 
 class Labeltrans():
     '''
-    transform tensor to longtensor
+    transform annotetion
     '''
     def __call__(self, label_input):
         label = np.asarray(label_input)
